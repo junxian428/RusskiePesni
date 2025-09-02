@@ -6,24 +6,126 @@
   <style>
     body { font-family: Arial, sans-serif; background: #f8f8f8; padding: 20px; }
     h1 { color: #b22222; }
-    ul { list-style-type: square; }
+    .controls { margin-bottom: 15px; }
+    input, select { padding: 5px; margin-right: 10px; }
+    ul { list-style-type: square; padding-left: 20px; }
     li { margin: 10px 0; }
     a { text-decoration: none; color: #1e90ff; }
     a:hover { text-decoration: underline; }
+    .pagination { margin-top: 20px; }
+    .pagination button {
+      padding: 5px 10px;
+      margin: 2px;
+      border: none;
+      background: #1e90ff;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .pagination button.disabled {
+      background: #ccc;
+      cursor: default;
+    }
   </style>
 </head>
 <body>
   <h1>Русские Песни 🎶</h1>
-  <ul>
-    <li><a href="https://www.youtube.com/watch?v=XXXXX" target="_blank">zhanulka - ты похож на кота (ПРЕМЬЕРА КЛИПА, 2021)</a></li>
-    <li><a href="https://www.youtube.com/watch?v=XXXXX" target="_blank">Cheba - Девочке 17</a></li>
-    <li><a href="https://www.youtube.com/watch?v=XXXXX" target="_blank">T-Fest - Улети</a></li>
-    <li><a href="https://www.youtube.com/watch?v=XXXXX" target="_blank">MIRAVI - Воля (Official Music Video, 2024)</a></li>
-    <li><a href="https://www.youtube.com/watch?v=XXXXX" target="_blank">Егор Крид - ТAPO ft. Tenderlybae , Егорик ( Премьера Клипa 2023 )</a></li>
-    <li><a href="https://www.youtube.com/watch?v=XXXXX" target="_blank">Леша Свик - Малиновый Свет | Official Video</a></li>
-    <li><a href="https://www.youtube.com/watch?v=XXXXX" target="_blank">GRIVINA - Я хочу | Official Video</a></li>
-    <li><a href="https://www.youtube.com/watch?v=XXXXX" target="_blank">МЫ - ЛУЧШИЕ ДРУЗЬЯ (перезалив)</a></li>
-  
-</ul>
+
+  <!-- 🔍 Поиск и сортировка -->
+  <div class="controls">
+    <input type="text" id="search" placeholder="Поиск по названию...">
+    <select id="sort">
+      <option value="asc">Сортировать: A → Я</option>
+      <option value="desc">Сортировать: Я → A</option>
+    </select>
+  </div>
+
+  <!-- 📜 Список песен -->
+  <ul id="song-list"></ul>
+
+  <!-- 📑 Пагинация -->
+  <div class="pagination" id="pagination"></div>
+
+  <script>
+    // 🎵 Массив песен
+    const songs = [
+      { title: "zhanulka - ты похож на кота (ПРЕМЬЕРА КЛИПА, 2021)", url: "https://www.youtube.com/watch?v=XXXXX" },
+      { title: "Cheba - Девочке 17", url: "https://www.youtube.com/watch?v=XXXXX" },
+      { title: "T-Fest - Улети", url: "https://www.youtube.com/watch?v=XXXXX" },
+      { title: "MIRAVI - Воля (Official Music Video, 2024)", url: "https://www.youtube.com/watch?v=XXXXX" },
+      { title: "Егор Крид - ТAPO ft. Tenderlybae , Егорик ( Премьера Клипa 2023 )", url: "https://www.youtube.com/watch?v=XXXXX" },
+      { title: "Леша Свик - Малиновый Свет | Official Video", url: "https://www.youtube.com/watch?v=XXXXX" },
+      { title: "GRIVINA - Я хочу | Official Video", url: "https://www.youtube.com/watch?v=XXXXX" },
+      { title: "МЫ - ЛУЧШИЕ ДРУЗЬЯ (перезалив)", url: "https://www.youtube.com/watch?v=XXXXX" }
+    ];
+
+    const itemsPerPage = 3; // 🎯 Сколько песен на страницу
+    let currentPage = 1;
+    let filteredSongs = [...songs];
+
+    const songList = document.getElementById("song-list");
+    const pagination = document.getElementById("pagination");
+    const searchInput = document.getElementById("search");
+    const sortSelect = document.getElementById("sort");
+
+    // 🔄 Рендер песен
+    function renderSongs() {
+      songList.innerHTML = "";
+      const start = (currentPage - 1) * itemsPerPage;
+      const end = start + itemsPerPage;
+      const pageSongs = filteredSongs.slice(start, end);
+
+      pageSongs.forEach(song => {
+        const li = document.createElement("li");
+        const link = document.createElement("a");
+        link.href = song.url;
+        link.target = "_blank";
+        link.textContent = song.title;
+        li.appendChild(link);
+        songList.appendChild(li);
+      });
+
+      renderPagination();
+    }
+
+    // 📑 Пагинация
+    function renderPagination() {
+      pagination.innerHTML = "";
+      const totalPages = Math.ceil(filteredSongs.length / itemsPerPage);
+
+      for (let i = 1; i <= totalPages; i++) {
+        const btn = document.createElement("button");
+        btn.textContent = i;
+        btn.className = i === currentPage ? "active" : "";
+        btn.onclick = () => {
+          currentPage = i;
+          renderSongs();
+        };
+        pagination.appendChild(btn);
+      }
+    }
+
+    // 🔍 Поиск
+    searchInput.addEventListener("input", () => {
+      const query = searchInput.value.toLowerCase();
+      filteredSongs = songs.filter(song => song.title.toLowerCase().includes(query));
+      currentPage = 1;
+      renderSongs();
+    });
+
+    // ↕ Сортировка
+    sortSelect.addEventListener("change", () => {
+      const order = sortSelect.value;
+      filteredSongs.sort((a, b) => {
+        if (order === "asc") return a.title.localeCompare(b.title, "ru");
+        else return b.title.localeCompare(a.title, "ru");
+      });
+      currentPage = 1;
+      renderSongs();
+    });
+
+    // 🚀 Первый рендер
+    renderSongs();
+  </script>
 </body>
 </html>
